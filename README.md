@@ -4,6 +4,7 @@ A [nextflow](https://www.nextflow.io/) pipeline that wraps [planer](https://gith
 
 # Installation
 
-1. make sure you've installed Java and nextflow following the [official instruction](https://www.nextflow.io/index.html#GetStarted)
-2. Create your config file following the [template.yaml](https://github.com/BioinfoTongLI/planer-nf/blob/main/template.yaml)
-3. Run with `nextflow run main.nf -params-file [path-to-your.yaml]`
+1. Make sure you've installed Java and nextflow following the [official instruction](https://www.nextflow.io/index.html#GetStarted)
+2. Make sure you've installed [Docker](https://www.docker.com/)
+3. Create your config file following the [template.yaml](https://github.com/BioinfoTongLI/planer-nf/blob/main/template.yaml)
+4. Run with `nextflow run main.nf -params-file [path-to-your.yaml]`
