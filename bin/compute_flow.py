@@ -148,7 +148,7 @@ def main(stem, img_p):
     img = imread(img_p)
     img -= img.min()
 
-    flow = count_flow(img, sample=0.3, window=1024, margin=0.1)
+    flow = count_flow(img, sample=1, window=1024, margin=0.1)
 
     flow.dump(f"{stem}_flow.npy", protocol=4)
 

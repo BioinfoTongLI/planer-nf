@@ -4,8 +4,8 @@
 
 nextflow.enable.dsl=2
 
-params.out_dir = "/tmp/test" //output dir
-params.img = "/home/ubuntu/Documents/playground/out_opt_flow_registered_DAPI.tif" // path to DAPI tif
+params.out_dir = "/nfs/team283_imaging/playground_Tong/Lea/images/" //output dir
+params.img = "/nfs/team283_imaging/playground_Tong/Lea/images/*DAPI.tif" // path to DAPI tif
 
 params.model_dir = projectDir + "/models"
 params.container = "hamat/planer_gpu:cuda114"
@@ -16,6 +16,8 @@ process Compute_flow {
     containerOptions "--gpus all -v ${params.model_dir}:/model:ro"
     publishDir params.out_dir, mode: "copy"
 
+    /*maxForks 1*/
+
     input:
     path(img)
 
@@ -25,16 +27,18 @@ process Compute_flow {
     script:
     stem = img.baseName
     """
-    compute_flow.py --stem ${stem} --img_p ${img}
+    compute_flow.py --stem "${stem}" --img_p ${img}
     """
 }
 
 process Post_process {
     cache "lenient"
     container params.container
-    /*containerOptions "--gpus all"*/
+    containerOptions "--gpus all"
     /*storeDir params.out_dir*/
     publishDir params.out_dir, mode: "copy"
+
+    maxForks 1
 
     input:
     tuple val(stem), path(img)
@@ -44,7 +48,7 @@ process Post_process {
 
     script:
     """
-    post_process.py --stem $stem --flow_npy ${img}
+    flow_tile.py --stem "$stem" --flow_npy ${img}
     """
 }
 
