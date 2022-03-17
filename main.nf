@@ -4,8 +4,9 @@
 
 nextflow.enable.dsl=2
 
-params.out_dir = "/nfs/team283_imaging/playground_Tong/Lea/images/" //output dir
-params.img = "/nfs/team283_imaging/playground_Tong/Lea/images/*DAPI.tif" // path to DAPI tif
+params.out_dir = "/tmp/nuc_seg/" //output dir
+params.img = "DAPI.tif" // path to DAPI tif
+params.scale = 0.25
 
 params.model_dir = projectDir + "/models"
 params.container = "hamat/planer_gpu:cuda114"
@@ -20,6 +21,7 @@ process Compute_flow {
 
     input:
     path(img)
+    val(scale)
 
     output:
     tuple val(stem), path("*flow.npy")
@@ -27,7 +29,7 @@ process Compute_flow {
     script:
     stem = img.baseName
     """
-    compute_flow.py --stem "${stem}" --img_p ${img}
+    compute_flow.py --stem "${stem}" --img_p ${img} --scale ${scale}
     """
 }
 
@@ -53,6 +55,6 @@ process Post_process {
 }
 
 workflow {
-    Compute_flow(Channel.fromPath(params.img))
+    Compute_flow(Channel.fromPath(params.img), params.scale)
     Post_process(Compute_flow.out)
 }
