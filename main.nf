@@ -19,6 +19,7 @@ process Compute_flow {
     publishDir params.out_dir, mode: "copy"
 
     /*maxForks 1*/
+    clusterOptions = "-gpu 'num=1:gmem=50000' -m dgx-b11"
 
     input:
     path(img)
@@ -40,6 +41,8 @@ process Post_process {
     containerOptions "--nv"
     /*storeDir params.out_dir*/
     publishDir params.out_dir, mode: "copy"
+
+    clusterOptions = "-gpu 'num=1:gmem=50000' -m dgx-b11"
 
     maxForks 1
 
