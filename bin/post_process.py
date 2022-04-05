@@ -41,6 +41,57 @@ def estimate_volumes(arr, sigma=3):
 
 
 def flow2msk(flowp, level=0.5, grad=0.5, area=None, volume=None):
+    import cupy as np, cupyx.scipy.ndimage as ndimg
+    print(1)
+    shp, dim = flowp.shape[:-1], flowp.ndim - 1
+    flow, l = flowp[:,:,:2], flowp[:,:,2]
+    msk = flowp[:,:,2]<level
+    l[:] = flow[:,:,0]**2; l+= flow[:,:,1]**2; l**=0.5
+    flow /= l[...,None]; msk |= l<grad
+    print(2)
+    flow *= ~msk[:,:,None]; del msk
+    ss = ((slice(None),) * (dim) + ([0,-1],)) * 2
+    for i in range(dim): flow[ss[dim-i:-i-2]]=0
+    print(3)
+    sn = np.sign(flow, dtype=np.float16)
+    sn *= 0.5; flow += sn; del sn
+    print(4)
+    dn = flow.astype(np.int16); del flow, l
+    strides = np.cumprod(np.array((1,)+shp[::-1]))
+    dn.shape = -1,dim; dn *= strides[-2::-1];
+    rst = np.arange(dn.size//dim, dtype='uint32')
+    np.add(rst, dn[:,0], out=rst, casting='unsafe')
+    np.add(rst, dn[:,1], out=rst, casting='unsafe')
+    del dn
+    print(5)
+    for i in range(10): rst = rst[rst]
+    print(6)
+    hist = np.bincount(rst, None, len(rst))
+    print(6.1)
+    hist = hist.astype('uint16').reshape(shp)
+    print(6.2)
+    lab, n = ndimg.label(hist, np.ones((3,)*dim))
+
+    print(6.3)
+    volumes = np.bincount(lab.ravel(), hist.ravel(), n+1)
+    print(6.4)
+    volumes = volumes.astype('uint16')
+    print(6.5)
+
+    # volumes = ndimg.sum(hist, lab, np.arange(n+1))
+    areas = np.bincount(lab.ravel()).astype('uint16')
+    print(7)
+    mean, std = estimate_volumes(volumes, 2)
+    if not volume: volume = max(mean-std*3, 50)
+    if not area: area = volumes // 3
+    print(8)
+    msk = (areas<area); msk &= (volumes>volume)
+    lut = np.zeros(n+1, np.uint32)
+    lut[msk] = np.arange(1, msk.sum()+1, dtype='uint32')
+    return lut[lab].ravel()[rst].reshape(shp)
+
+
+def flow2msk_master(flowp, level=0.5, grad=0.5, area=None, volume=None):
     shp, dim = flowp.shape[:-1], flowp.ndim - 1
     l = np.linalg.norm(flowp[:, :, :2], axis=-1)
     flow = flowp[:, :, :2] / l.reshape(shp + (1,))
@@ -140,7 +191,8 @@ def rgb_mask(img, lab):
 def main(stem, flow_npy):
     from tifffile import imread, imwrite
 
-    flow = np.load(flow_npy, allow_pickle=True)
+    import cupy as np, cupyx.scipy.ndimage as ndimg
+    flow = np.asarray(np.load(flow_npy, allow_pickle=True)).astype('float16')
 
     lab = flow2msk(flow, level=0.2)
 
