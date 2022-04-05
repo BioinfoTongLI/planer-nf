@@ -12,4 +12,5 @@ RUN pip install \
      "dask[distributed]"==2021.12.0 \
      cupy-cuda114 ome-types fire \
      planer planer-zoo onnx onnxruntime \
+     imagecodecs \
      --no-cache-dir
