@@ -143,12 +143,13 @@ def main(stem, img_p, scale):
     planer.core(cupy)
     load("cyto_v2")
 
-    from tifffile import imread
+    from dask_image.imread import imread
 
-    img = imread(img_p)
+    img = imread(img_p)[0]
     img -= img.min()
+    print(img)
 
-    flow = count_flow(img, sample=scale, window=1024, margin=0.1)
+    flow = count_flow(img.compute(), sample=scale, window=1024, margin=0.1)
 
     flow.dump(f"{stem}_flow.npy", protocol=4)
 
