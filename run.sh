@@ -17,4 +17,5 @@ NXF_OPTS='-Dleveldb.mmap=false' NXF_WORK=$TMP_NF_WORK LSB_DEFAULTGROUP='team283'
 	-params-file $1 \
 	-with-trace $TRACE_FILE \
 	-profile standard,singularity \
+	-entry cellpose \
 	-resume

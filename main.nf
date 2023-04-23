@@ -61,9 +61,17 @@ process Post_process {
 
 process nuclei_seg {
     echo true
-    container "cellpose_with_cyto2"
+    container "/lustre/scratch117/cellgen/team283/tl10/sifs/cellpose_2.0.sif"
     containerOptions "--nv"
+    /*containerOptions "--gpus all"*/
+    clusterOptions = "-gpu 'num=1:gmem=31000' -m dgx-b11"
     storeDir params.out_dir
+
+    memory { 680.GB * task.attempt }
+    /*time { 1.hour * task.attempt }*/
+
+    errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
+    maxRetries 2
 
     input:
     path(ome_tif)
@@ -74,7 +82,7 @@ process nuclei_seg {
     script:
     stem = file(ome_tif.baseName).baseName
     """
-    nuclei_seg.py "${ome_tif}" --stem "${stem}" --diam 40
+    nuclei_seg.py "${ome_tif}" --stem "${stem}" --diam 45
     """
 }
 

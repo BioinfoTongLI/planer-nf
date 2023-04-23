@@ -1,0 +1,35 @@
+FROM nvidia/cuda:11.1.1-runtime-ubuntu20.04
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      procps git python3 python3-dev python3-pip python-is-python3 && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# install pytorch
+RUN pip install torch==1.9.0+cu111 torchvision==0.10.0+cu111 \
+      -f https://download.pytorch.org/whl/torch_stable.html \
+      --no-cache-dir
+
+# install cellpose and the resto of the packages
+RUN pip install \
+     numpy==1.21.2 \
+     scipy==1.7.3 \
+     tifffile==2021.11.2 \
+     dask-image==2021.12.0 \
+     "dask[distributed]"==2021.12.0 \
+     "opencv-python-headless<4.3" \
+     cellpose \
+     --no-cache-dir
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt-get update && apt-get install -y libgtk2.0-dev
+
+# set cellpose models path
+ENV CELLPOSE_LOCAL_MODELS_PATH=/opt/cellpose/models
+# create models path and download models
+RUN mkdir -p "${CELLPOSE_LOCAL_MODELS_PATH}" && \
+    python -c "from cellpose import models; [ models.Cellpose(model_type=model) for model in ['cyto2'] ]" && \
+    chmod a+rx /opt/cellpose/models/*
+
+RUN pip install fire imagecodecs
